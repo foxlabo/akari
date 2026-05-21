@@ -3,7 +3,7 @@
 import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { Send } from 'lucide-react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { ConversationMenu } from '@/components/chat/conversation-menu'
 import { MessageBubble } from '@/components/chat/message-bubble'
 import { Button } from '@/components/ui/button'
@@ -25,13 +25,30 @@ export function ChatClient({
 }: ChatClientProps) {
   const [input, setInput] = useState('')
 
+  // Transport identity is meaningful to useChat — memoize so typing
+  // doesn't tear down and rebuild it on every keystroke.
+  const transport = useMemo(
+    () =>
+      new DefaultChatTransport({
+        api: '/api/chat',
+        prepareSendMessagesRequest({ messages, body }) {
+          const last = messages[messages.length - 1]
+          return {
+            body: {
+              ...body,
+              conversationId,
+              message: last,
+            },
+          }
+        },
+      }),
+    [conversationId],
+  )
+
   const { messages, sendMessage, status, error } = useChat({
     id: conversationId,
     messages: initialMessages,
-    transport: new DefaultChatTransport({
-      api: '/api/chat',
-      body: { conversationId },
-    }),
+    transport,
   })
 
   const isStreaming = status === 'streaming' || status === 'submitted'
@@ -64,9 +81,13 @@ export function ChatClient({
             messages.map((message) => <MessageBubble key={message.id} message={message} />)
           )}
           {error ? (
-            <p className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-700 dark:bg-red-950 dark:text-red-300">
+            <div
+              role="alert"
+              aria-live="assertive"
+              className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-700 dark:bg-red-950 dark:text-red-300"
+            >
               {error.message}
-            </p>
+            </div>
           ) : null}
         </div>
       </ScrollArea>
@@ -85,6 +106,7 @@ export function ChatClient({
               }
             }}
             placeholder="Type a message... (Ctrl/Cmd + Enter to send)"
+            aria-label="Message"
             disabled={isStreaming}
             rows={2}
             className="resize-none"
