@@ -1,6 +1,7 @@
 import type { UIMessage } from 'ai'
 import { memo } from 'react'
 import ReactMarkdown, { type Components, defaultUrlTransform } from 'react-markdown'
+import rehypeHighlight from 'rehype-highlight'
 import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
 
@@ -15,9 +16,6 @@ const ALLOWED_URL_PROTOCOLS = ['http:', 'https:', 'mailto:'] as const
  * is replaced with `#` to neutralise injection through model output.
  */
 function safeUrlTransform(url: string): string {
-  // react-markdown's defaultUrlTransform already strips most dangerous cases,
-  // but we double-check the protocol explicitly so future markdown plugins
-  // don't reintroduce risk.
   const defaultResolved = defaultUrlTransform(url)
   if (!defaultResolved) return ''
   try {
@@ -26,7 +24,6 @@ function safeUrlTransform(url: string): string {
       return defaultResolved
     }
   } catch {
-    // Relative URLs and fragments do not parse with a base — accept them.
     if (defaultResolved.startsWith('#') || defaultResolved.startsWith('/')) {
       return defaultResolved
     }
@@ -42,12 +39,16 @@ const markdownComponents: Components = {
   ),
 }
 
-function MessageBubbleImpl({ message }: MessageBubbleProps) {
-  const isUser = message.role === 'user'
-  const text = message.parts
+function extractMessageText(message: UIMessage): string {
+  return message.parts
     .filter((p) => p.type === 'text')
     .map((p) => ('text' in p ? p.text : ''))
     .join('\n\n')
+}
+
+function MessageBubbleImpl({ message }: MessageBubbleProps) {
+  const isUser = message.role === 'user'
+  const text = extractMessageText(message)
 
   return (
     <div className={cn('flex w-full', isUser ? 'justify-end' : 'justify-start')}>
@@ -59,9 +60,10 @@ function MessageBubbleImpl({ message }: MessageBubbleProps) {
             : 'bg-white text-zinc-900 ring-1 ring-zinc-200 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-800',
         )}
       >
-        <div className="prose prose-sm dark:prose-invert max-w-none [&_pre]:bg-zinc-100 dark:[&_pre]:bg-zinc-800">
+        <div className="prose prose-sm dark:prose-invert max-w-none [&_pre]:bg-zinc-100 dark:[&_pre]:bg-zinc-900 [&_pre]:px-3 [&_pre]:py-2 [&_pre]:rounded-md [&_code]:before:hidden [&_code]:after:hidden">
           <ReactMarkdown
             remarkPlugins={[remarkGfm]}
+            rehypePlugins={[[rehypeHighlight, { detect: true, ignoreMissing: true }]]}
             urlTransform={safeUrlTransform}
             components={markdownComponents}
           >
@@ -74,19 +76,10 @@ function MessageBubbleImpl({ message }: MessageBubbleProps) {
 }
 
 /**
- * Memoised by message identity so unrelated re-renders (e.g. composer typing)
- * don't reparse markdown.
+ * Memoised by message identity + text content so unrelated re-renders
+ * (e.g. composer typing) don't reparse markdown.
  */
 export const MessageBubble = memo(MessageBubbleImpl, (prev, next) => {
   if (prev.message.id !== next.message.id) return false
-  // Re-render if any text part content changed (streaming updates the last bubble).
-  const prevText = prev.message.parts
-    .filter((p) => p.type === 'text')
-    .map((p) => ('text' in p ? p.text : ''))
-    .join('')
-  const nextText = next.message.parts
-    .filter((p) => p.type === 'text')
-    .map((p) => ('text' in p ? p.text : ''))
-    .join('')
-  return prevText === nextText
+  return extractMessageText(prev.message) === extractMessageText(next.message)
 })

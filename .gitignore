@@ -46,6 +46,8 @@ akari.db
 akari.db-shm
 akari.db-wal
 *.local.db
+codex-review-*.log
+run.log
 
 # Test artifacts
 /playwright-report

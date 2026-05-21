@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
 
+/* highlight.js theme for code blocks in assistant markdown. */
+@import "highlight.js/styles/github.css" layer(base);
+@import "highlight.js/styles/github-dark.css" layer(base) (prefers-color-scheme: dark);
+
 /* Use a class-based dark mode so the ThemeProvider can override the OS preference. */
 @custom-variant dark (&:where(.dark, .dark *));
 

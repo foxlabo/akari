@@ -108,11 +108,19 @@ export async function POST(req: Request) {
     return jsonError(message, 500)
   }
 
+  // Capture usage from streamText's onFinish so we can persist token counts
+  // when the UI stream finishes (the two callbacks fire at different stages).
+  let totalTokens: number | undefined
+
   const result = streamText({
     model,
     system: persona.systemPrompt,
     messages: modelMessages,
     temperature: persona.temperature,
+    onFinish: ({ usage }) => {
+      const t = usage?.totalTokens
+      totalTokens = typeof t === 'number' ? t : undefined
+    },
   })
 
   return result.toUIMessageStreamResponse({
@@ -126,6 +134,7 @@ export async function POST(req: Request) {
         conversationId,
         role: 'assistant',
         content: text,
+        tokens: totalTokens ?? null,
       })
     },
     onError: (error) => {
