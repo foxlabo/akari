@@ -6,17 +6,18 @@ Multi-provider AI chat with persona switching, conversation history, and local-f
 
 ## Status
 
-🚧 **Pre-MVP** — under active development.
+✅ **v0.1 MVP** — feature-complete chat with persona switching and persistence.
 
-## Features (planned for MVP)
+## Features
 
 - 🤖 **Multi-provider** — OpenAI, Anthropic, Google Gemini, Ollama (local)
-- 🎭 **Personas** — Custom system prompts + per-persona model/temperature
-- 💬 **Streaming** — Token-level streaming with cancel
-- 📝 **Markdown + code** — Rich rendering with syntax highlighting
-- 💾 **Local-first** — SQLite-backed history, no server required
-- 🗂 **Conversation history** — Search, tag, archive
-- 🌐 **Japanese-first UX** — Prompt pack tailored for Japanese use cases
+- 🎭 **Personas** — Custom system prompts, per-persona model + temperature, CRUD UI
+- 💬 **Streaming** — Token-level streaming via AI SDK v6
+- 📝 **Markdown** — `react-markdown` + GFM in assistant messages
+- 💾 **Local-first** — SQLite (`better-sqlite3`) auto-migrated on first run
+- 🗂 **Conversation history** — Sidebar, rename, delete, archive (archive UI in v0.2)
+- 🌓 **Theme** — Light / dark / system with no-flash hydration
+- 🌐 **Japanese-first UX** — Default personas include Japanese business email + code review
 
 ## Tech Stack
 
