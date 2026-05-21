@@ -1,5 +1,6 @@
 import { PlusCircle } from 'lucide-react'
 import Link from 'next/link'
+import { ThemeToggle } from '@/components/theme/theme-toggle'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { ensureDbReady } from '@/lib/db/init'
@@ -37,10 +38,11 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             )}
           </nav>
         </ScrollArea>
-        <div className="border-t border-zinc-200 p-3 text-xs text-zinc-500 dark:border-zinc-800">
+        <div className="flex items-center justify-between border-t border-zinc-200 p-3 text-xs text-zinc-500 dark:border-zinc-800">
           <Link href="/personas" className="hover:underline">
             Manage personas →
           </Link>
+          <ThemeToggle />
         </div>
       </aside>
       <div className="flex flex-1 flex-col min-w-0">{children}</div>
