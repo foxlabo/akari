@@ -10,12 +10,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import type { ProviderId } from '@/lib/ai/providers'
 
 interface PersonaCreateDialogProps {
+  configuredProviderIds: ProviderId[]
   children: React.ReactNode
 }
 
-export function PersonaCreateDialog({ children }: PersonaCreateDialogProps) {
+export function PersonaCreateDialog({ configuredProviderIds, children }: PersonaCreateDialogProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -29,7 +31,7 @@ export function PersonaCreateDialog({ children }: PersonaCreateDialogProps) {
             preset when starting a conversation.
           </DialogDescription>
         </DialogHeader>
-        <PersonaForm onSaved={() => setOpen(false)} />
+        <PersonaForm configuredProviderIds={configuredProviderIds} onSaved={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   )

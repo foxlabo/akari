@@ -18,17 +18,18 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { listProviders, type ProviderId } from '@/lib/ai/providers'
+import { getProviderCatalog, type ProviderId } from '@/lib/ai/providers'
 import type { Persona } from '@/lib/db/schema'
 
 interface PersonaFormProps {
   persona?: Persona
+  configuredProviderIds: ProviderId[]
   onSaved?: () => void
 }
 
-const providers = listProviders()
+const providerCatalog = getProviderCatalog()
 
-export function PersonaForm({ persona, onSaved }: PersonaFormProps) {
+export function PersonaForm({ persona, configuredProviderIds, onSaved }: PersonaFormProps) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
@@ -42,7 +43,8 @@ export function PersonaForm({ persona, onSaved }: PersonaFormProps) {
     temperature: persona?.temperature ?? 0.7,
   })
 
-  const currentProvider = providers.find((p) => p.id === values.provider)
+  const configuredSet = new Set(configuredProviderIds)
+  const currentProvider = providerCatalog.find((p) => p.id === values.provider)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -103,7 +105,7 @@ export function PersonaForm({ persona, onSaved }: PersonaFormProps) {
             value={values.provider}
             onValueChange={(v) => {
               const provider = v as ProviderId
-              const firstModel = providers.find((p) => p.id === provider)?.models[0]?.id
+              const firstModel = providerCatalog.find((p) => p.id === provider)?.models[0]?.id
               setValues({ ...values, provider, model: firstModel ?? values.model })
             }}
           >
@@ -111,12 +113,15 @@ export function PersonaForm({ persona, onSaved }: PersonaFormProps) {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {providers.map((p) => (
-                <SelectItem key={p.id} value={p.id} disabled={!p.configured}>
-                  {p.label}
-                  {!p.configured ? ' (no API key)' : ''}
-                </SelectItem>
-              ))}
+              {providerCatalog.map((p) => {
+                const configured = configuredSet.has(p.id)
+                return (
+                  <SelectItem key={p.id} value={p.id} disabled={!configured}>
+                    {p.label}
+                    {configured ? '' : ' (no API key)'}
+                  </SelectItem>
+                )
+              })}
             </SelectContent>
           </Select>
         </Field>
@@ -152,7 +157,11 @@ export function PersonaForm({ persona, onSaved }: PersonaFormProps) {
         />
       </Field>
 
-      {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+      {error ? (
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          {error}
+        </p>
+      ) : null}
 
       <div className="flex items-center justify-between gap-3 pt-2">
         {persona ? (

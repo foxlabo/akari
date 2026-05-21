@@ -10,13 +10,20 @@ export interface ProviderModel {
   label: string
 }
 
-export interface ProviderInfo {
+export interface ProviderCatalogEntry {
   id: ProviderId
   label: string
   models: ProviderModel[]
+}
+
+export interface ConfiguredProviderInfo extends ProviderCatalogEntry {
   configured: boolean
 }
 
+/**
+ * The static catalogue of provider + model combinations the UI exposes.
+ * Pure data, safe to import from client components.
+ */
 const CATALOG: Record<ProviderId, { label: string; models: ProviderModel[] }> = {
   openai: {
     label: 'OpenAI',
@@ -50,22 +57,23 @@ const CATALOG: Record<ProviderId, { label: string; models: ProviderModel[] }> = 
   },
 }
 
-function isProviderConfigured(provider: ProviderId): boolean {
-  switch (provider) {
-    case 'openai':
-      return !!process.env.OPENAI_API_KEY
-    case 'anthropic':
-      return !!process.env.ANTHROPIC_API_KEY
-    case 'google':
-      return !!process.env.GOOGLE_GENERATIVE_AI_API_KEY
-    case 'ollama':
-      return true
-  }
+/**
+ * Static catalogue of provider + model options. Pure data — safe to call
+ * from client components.
+ */
+export function getProviderCatalog(): ProviderCatalogEntry[] {
+  return (Object.entries(CATALOG) as Array<[ProviderId, (typeof CATALOG)[ProviderId]]>).map(
+    ([id, entry]) => ({
+      id,
+      label: entry.label,
+      models: entry.models,
+    }),
+  )
 }
 
 /**
  * Whether the given provider/model combination is in the static catalogue.
- * Used to reject Server Action inputs that reference unknown models.
+ * Pure data — safe to call from client components.
  */
 export function isKnownProviderModel(provider: string, model: string): boolean {
   if (!(provider in CATALOG)) return false
@@ -74,8 +82,24 @@ export function isKnownProviderModel(provider: string, model: string): boolean {
 }
 
 /**
- * Resolve a provider+model combination to a runnable LanguageModel,
- * or throw a descriptive error if the provider is not configured.
+ * Inspect environment variables to determine which providers have credentials.
+ * **Server-only** — reads non-`NEXT_PUBLIC_` env vars; importing this from a
+ * client component will yield empty/wrong results.
+ */
+export function getConfiguredProviderIds(): ProviderId[] {
+  const configured: ProviderId[] = []
+  if (process.env.OPENAI_API_KEY) configured.push('openai')
+  if (process.env.ANTHROPIC_API_KEY) configured.push('anthropic')
+  if (process.env.GOOGLE_GENERATIVE_AI_API_KEY) configured.push('google')
+  // Ollama doesn't need an API key — assume locally reachable unless we want
+  // to add an active-probe later.
+  configured.push('ollama')
+  return configured
+}
+
+/**
+ * Resolve a provider+model combination to a runnable LanguageModel.
+ * **Server-only** — throws if the provider's credentials are missing.
  */
 export function resolveModel(provider: ProviderId, model: string): LanguageModel {
   switch (provider) {
@@ -104,19 +128,4 @@ export function resolveModel(provider: ProviderId, model: string): LanguageModel
       throw new Error(`Unknown provider: ${String(_exhaustive)}`)
     }
   }
-}
-
-/**
- * Static catalogue of provider+models exposed in the UI.
- * Adding a new model in CATALOG surfaces it in the selector; no other change needed.
- */
-export function listProviders(): ProviderInfo[] {
-  return (Object.entries(CATALOG) as Array<[ProviderId, (typeof CATALOG)[ProviderId]]>).map(
-    ([id, entry]) => ({
-      id,
-      label: entry.label,
-      models: entry.models,
-      configured: isProviderConfigured(id),
-    }),
-  )
 }

@@ -1,6 +1,7 @@
 import { ArrowLeft, PlusCircle } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { getConfiguredProviderIds } from '@/lib/ai/providers'
 import { ensureDbReady } from '@/lib/db/init'
 import { listPersonas } from '@/lib/db/queries'
 import { PersonaCard } from './_components/persona-card'
@@ -11,6 +12,7 @@ export const dynamic = 'force-dynamic'
 export default function PersonasPage() {
   ensureDbReady()
   const personas = listPersonas()
+  const configuredProviderIds = getConfiguredProviderIds()
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-10">
@@ -27,7 +29,7 @@ export default function PersonasPage() {
             Saved system prompts + model selection. Each conversation uses one persona.
           </p>
         </div>
-        <PersonaCreateDialog>
+        <PersonaCreateDialog configuredProviderIds={configuredProviderIds}>
           <Button>
             <PlusCircle />
             New persona
@@ -42,7 +44,7 @@ export default function PersonasPage() {
       ) : (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {personas.map((p) => (
-            <PersonaCard key={p.id} persona={p} />
+            <PersonaCard key={p.id} persona={p} configuredProviderIds={configuredProviderIds} />
           ))}
         </div>
       )}
