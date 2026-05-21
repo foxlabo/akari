@@ -43,6 +43,10 @@ export async function deleteConversationAction(id: string) {
   redirect('/chat/new')
 }
 
+/** 10 MB cap on a single export payload — Server Actions stream over RPC, so
+ *  unbounded blobs are a foot-gun. */
+const MAX_EXPORT_BYTES = 10 * 1024 * 1024
+
 /**
  * Build a self-contained Markdown export for the conversation.
  * Returned as a string so the client can trigger a download.
@@ -80,6 +84,15 @@ export async function exportConversationAction(
     lines.push('')
   }
 
+  const markdown = lines.join('\n')
+  const byteLength = Buffer.byteLength(markdown, 'utf8')
+  if (byteLength > MAX_EXPORT_BYTES) {
+    return {
+      ok: false,
+      error: `Export is too large (${(byteLength / 1024 / 1024).toFixed(1)} MB). Limit is ${MAX_EXPORT_BYTES / 1024 / 1024} MB.`,
+    }
+  }
+
   const slug =
     conversation.title
       .replace(/[^a-z0-9-]+/gi, '-')
@@ -88,5 +101,5 @@ export async function exportConversationAction(
   const date = new Date(conversation.createdAt).toISOString().slice(0, 10)
   const filename = `${date}-${slug}.md`
 
-  return { ok: true, filename, markdown: lines.join('\n') }
+  return { ok: true, filename, markdown }
 }

@@ -48,6 +48,20 @@ Open <http://localhost:3000>.
 - [Development](./docs/DEVELOPMENT.md) — Local setup and workflows
 - [Roadmap](./docs/ROADMAP.md) — Planned milestones
 
+## Security model
+
+Akari is designed as a **single-user, local-only** application:
+
+- No authentication / authorisation is built in
+- All mutations (chat / persona / archive / delete / export) are reachable by
+  any caller that can hit the server
+- DB lives on the local filesystem (`./akari.db`)
+
+If you deploy Akari beyond `localhost` (e.g. behind a tunnel, on a shared
+network, on a public host), **you must add an auth layer in front of it**.
+Reasonable starting points: Auth.js with a single provider, basic auth at the
+reverse proxy, or Tailscale-only access.
+
 ## License
 
 [MIT](./LICENSE)
