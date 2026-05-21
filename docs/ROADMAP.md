@@ -1,34 +1,51 @@
 # Roadmap
 
-## v0.1 — MVP ✅
+## v1.0 — Shipped ✅
 
-- [x] Project scaffold (Next.js 16, Biome, Drizzle, Vitest, Playwright)
-- [x] SQLite schema: Persona, Conversation, Message + auto-migrate + default seed
-- [x] `POST /api/chat` streaming endpoint (AI SDK v6 + UIMessage)
-- [x] Chat UI: message list, input, streaming render, error display
-- [x] Persona CRUD UI (list, create, edit, delete via dialogs)
-- [x] Conversation history sidebar + rename + delete
-- [x] Markdown rendering (react-markdown + remark-gfm)
-- [x] Provider switching (per-persona model selection with auto-update on provider change)
-- [x] Four providers wired: OpenAI, Anthropic, Google, Ollama
-- [x] Light / dark / system theme with no-flash hydration
+After two rounds of Codex review and iteration, the following are in:
 
-## v0.2 — Polish
+- Project scaffold (Next.js 16, Biome, Drizzle, Vitest, Playwright)
+- SQLite schema (personas / conversations / messages) with auto-migrate +
+  idempotent default-persona seeding (8 personas, JP + EN)
+- `POST /api/chat` streaming endpoint
+  - Server-authoritative history with tail cap (80 messages)
+  - End-to-end idempotency via deterministic assistant ids
+  - Validation + structured 4xx/5xx errors, internal logs sanitised
+  - Rejects archived conversations (410)
+  - Token usage persisted on assistant messages
+- Chat UI
+  - Streaming render with memoised message bubbles
+  - Markdown + GFM + syntax-highlighted code (light/dark themes)
+  - Server/client error display via role="alert"
+  - Conversation rename / archive / delete / export (Markdown, 10 MB cap)
+  - Sidebar conversation list + client-side search
+  - Keyboard shortcuts: ⌘/Ctrl+K (focus composer), ⌘/Ctrl+⇧+N (new chat)
+- Persona CRUD UI
+  - Provider catalogue split from server env probe (no leak / no false disable)
+  - Per-persona provider + model + temperature with auto-update on switch
+  - Server-side validation (name ≤ 80, system prompt ≤ 8000, model ∈ catalogue)
+- Theme: light / dark / system with pre-hydration FOUC guard
+- Quality gates: TypeScript strict, Biome lint+format, Vitest (15 tests),
+  Playwright config wired
+- Documented as **local-only**; auth is out of scope for v1
 
-- [ ] Token counter + budget warnings
-- [ ] Conversation archive UI (currently archive is in DB but no UI)
-- [ ] Tag and search conversations
-- [ ] Export conversation (Markdown / JSON)
-- [ ] Keyboard shortcuts (palette, new chat, switch persona)
-- [ ] Code-block syntax highlighting (Shiki)
-- [ ] Japanese prompt pack (10+ personas covering business / dev / writing)
-- [ ] i18n (ja / en)
-- [ ] Playwright E2E for new-conversation + send-message flow
+## v1.1 — Polish
 
-## v0.3 — Beyond
+- Token-budget-aware history trimming (currently message-count based)
+- Streaming export endpoint (currently buffers in memory before responding)
+- Multi-worker safe migration lock (mutex / startup hook)
+- Atomic upsert in `appendMessage` (currently select-then-insert in a
+  transaction — fine for single-connection SQLite, not multi-process)
+- Token counter UI on assistant messages
+- Conversation tag and full-text search
+- Playwright E2E for new-conversation + send-message flow
+- i18n (ja / en)
+- Persona import/export
 
-- [ ] File attachment + vision-capable models
-- [ ] Voice input
-- [ ] Tool/MCP integration surface
-- [ ] Optional sync (when a remote DB is introduced)
-- [ ] Auth.js once a hosted version is planned
+## v2.0 — Beyond
+
+- File attachments + vision-capable models
+- Voice input
+- Tool / MCP integration surface
+- Optional sync (when a remote DB is introduced)
+- Auth.js once a hosted version is planned

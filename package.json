@@ -1,6 +1,6 @@
 {
   "name": "akari",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Multi-provider AI chat with persona switching and local-first storage. Inspired by lobe-chat, re-implemented from scratch.",
   "license": "MIT",

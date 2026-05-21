@@ -10,13 +10,15 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
+import type { ProviderId } from '@/lib/ai/providers'
 import type { Persona } from '@/lib/db/schema'
 
 interface PersonaCardProps {
   persona: Persona
+  configuredProviderIds: ProviderId[]
 }
 
-export function PersonaCard({ persona }: PersonaCardProps) {
+export function PersonaCard({ persona, configuredProviderIds }: PersonaCardProps) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -48,7 +50,11 @@ export function PersonaCard({ persona }: PersonaCardProps) {
             persona will pick up the changes on the next message.
           </DialogDescription>
         </DialogHeader>
-        <PersonaForm persona={persona} onSaved={() => setOpen(false)} />
+        <PersonaForm
+          persona={persona}
+          configuredProviderIds={configuredProviderIds}
+          onSaved={() => setOpen(false)}
+        />
       </DialogContent>
     </Dialog>
   )

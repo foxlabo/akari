@@ -6,7 +6,8 @@ Multi-provider AI chat with persona switching, conversation history, and local-f
 
 ## Status
 
-✅ **v0.1 MVP** — feature-complete chat with persona switching and persistence.
+✅ **v1.0** — production-quality local chat: streaming, persistence, persona CRUD,
+theme, search, export, archive, keyboard shortcuts. Two rounds of Codex review applied.
 
 ## Features
 
@@ -23,7 +24,7 @@ Multi-provider AI chat with persona switching, conversation history, and local-f
 
 - **Framework**: Next.js 16 (App Router) + React 19.2
 - **Styling**: Tailwind CSS 4 + shadcn/ui
-- **AI**: Vercel AI SDK 5.x (multi-provider abstraction)
+- **AI**: Vercel AI SDK v6 (multi-provider abstraction)
 - **DB**: SQLite (better-sqlite3) + Drizzle ORM
 - **Validation**: Zod
 - **Quality**: Biome (lint/format) + Vitest + Playwright
