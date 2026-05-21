@@ -142,12 +142,14 @@ describe('conversation queries', () => {
     })
   }
 
-  it('creates a conversation and appends messages', () => {
+  it('creates a conversation and appends messages in insertion order', async () => {
     const persona = seedPersona()
     const conv = queries.createConversation(persona.id, 'Hello')
     expect(conv.title).toBe('Hello')
 
     queries.appendMessage({ conversationId: conv.id, role: 'user', content: 'hi' })
+    // Small delay so createdAt advances even on fast machines.
+    await new Promise((r) => setTimeout(r, 5))
     queries.appendMessage({
       conversationId: conv.id,
       role: 'assistant',
@@ -156,6 +158,26 @@ describe('conversation queries', () => {
 
     const messages = queries.listMessages(conv.id)
     expect(messages.map((m) => m.content)).toEqual(['hi', 'hello there'])
+  })
+
+  it('appendMessage is idempotent when the same client id is reused', () => {
+    const persona = seedPersona()
+    const conv = queries.createConversation(persona.id, 'Idempotency')
+    const first = queries.appendMessage({
+      id: 'fixed-client-id',
+      conversationId: conv.id,
+      role: 'user',
+      content: 'hi',
+    })
+    const second = queries.appendMessage({
+      id: 'fixed-client-id',
+      conversationId: conv.id,
+      role: 'user',
+      content: 'hi (duplicate)',
+    })
+    expect(second.id).toBe(first.id)
+    expect(second.content).toBe('hi') // original content preserved
+    expect(queries.listMessages(conv.id)).toHaveLength(1)
   })
 
   it('hides archived conversations by default', () => {

@@ -19,37 +19,40 @@ function getSystemTheme(): 'light' | 'dark' {
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
-function applyTheme(theme: Theme) {
-  if (typeof document === 'undefined') return
-  const root = document.documentElement
+function readStoredTheme(): Theme {
+  if (typeof window === 'undefined') return 'system'
+  const stored = window.localStorage.getItem(STORAGE_KEY)
+  if (stored === 'light' || stored === 'dark' || stored === 'system') return stored
+  return 'system'
+}
+
+function applyTheme(theme: Theme): 'light' | 'dark' {
   const effective = theme === 'system' ? getSystemTheme() : theme
-  root.classList.toggle('dark', effective === 'dark')
-  root.style.colorScheme = effective
+  if (typeof document !== 'undefined') {
+    const root = document.documentElement
+    root.classList.toggle('dark', effective === 'dark')
+    root.style.colorScheme = effective
+  }
+  return effective
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('system')
-  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light')
+  // Lazy initialiser so the first client render already matches what the inline
+  // pre-hydration script applied. This prevents the toggle icon from briefly
+  // showing the wrong state.
+  const [theme, setThemeState] = useState<Theme>(() => readStoredTheme())
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window === 'undefined') return 'light'
+    const t = readStoredTheme()
+    return t === 'system' ? getSystemTheme() : t
+  })
 
-  // Initial load from localStorage.
   useEffect(() => {
-    const stored = typeof window !== 'undefined' ? window.localStorage.getItem(STORAGE_KEY) : null
-    if (stored === 'light' || stored === 'dark' || stored === 'system') {
-      setThemeState(stored)
-    }
-  }, [])
-
-  // Apply theme + listen to system changes when in system mode.
-  useEffect(() => {
-    applyTheme(theme)
-    setResolvedTheme(theme === 'system' ? getSystemTheme() : theme)
+    setResolvedTheme(applyTheme(theme))
 
     if (theme !== 'system') return
     const media = window.matchMedia('(prefers-color-scheme: dark)')
-    const listener = () => {
-      applyTheme('system')
-      setResolvedTheme(getSystemTheme())
-    }
+    const listener = () => setResolvedTheme(applyTheme('system'))
     media.addEventListener('change', listener)
     return () => media.removeEventListener('change', listener)
   }, [theme])

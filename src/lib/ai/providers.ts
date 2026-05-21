@@ -17,6 +17,62 @@ export interface ProviderInfo {
   configured: boolean
 }
 
+const CATALOG: Record<ProviderId, { label: string; models: ProviderModel[] }> = {
+  openai: {
+    label: 'OpenAI',
+    models: [
+      { id: 'gpt-4o-mini', label: 'GPT-4o mini' },
+      { id: 'gpt-4o', label: 'GPT-4o' },
+      { id: 'gpt-4.1-mini', label: 'GPT-4.1 mini' },
+    ],
+  },
+  anthropic: {
+    label: 'Anthropic',
+    models: [
+      { id: 'claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku' },
+      { id: 'claude-3-5-sonnet-latest', label: 'Claude 3.5 Sonnet' },
+      { id: 'claude-3-7-sonnet-latest', label: 'Claude 3.7 Sonnet' },
+    ],
+  },
+  google: {
+    label: 'Google',
+    models: [
+      { id: 'gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash' },
+      { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
+    ],
+  },
+  ollama: {
+    label: 'Ollama (local)',
+    models: [
+      { id: 'llama3.2', label: 'Llama 3.2' },
+      { id: 'qwen2.5', label: 'Qwen 2.5' },
+    ],
+  },
+}
+
+function isProviderConfigured(provider: ProviderId): boolean {
+  switch (provider) {
+    case 'openai':
+      return !!process.env.OPENAI_API_KEY
+    case 'anthropic':
+      return !!process.env.ANTHROPIC_API_KEY
+    case 'google':
+      return !!process.env.GOOGLE_GENERATIVE_AI_API_KEY
+    case 'ollama':
+      return true
+  }
+}
+
+/**
+ * Whether the given provider/model combination is in the static catalogue.
+ * Used to reject Server Action inputs that reference unknown models.
+ */
+export function isKnownProviderModel(provider: string, model: string): boolean {
+  if (!(provider in CATALOG)) return false
+  const entry = CATALOG[provider as ProviderId]
+  return entry.models.some((m) => m.id === model)
+}
+
 /**
  * Resolve a provider+model combination to a runnable LanguageModel,
  * or throw a descriptive error if the provider is not configured.
@@ -52,47 +108,15 @@ export function resolveModel(provider: ProviderId, model: string): LanguageModel
 
 /**
  * Static catalogue of provider+models exposed in the UI.
- * Adding a new model here surfaces it in the selector; no other change needed.
+ * Adding a new model in CATALOG surfaces it in the selector; no other change needed.
  */
 export function listProviders(): ProviderInfo[] {
-  return [
-    {
-      id: 'openai',
-      label: 'OpenAI',
-      configured: !!process.env.OPENAI_API_KEY,
-      models: [
-        { id: 'gpt-4o-mini', label: 'GPT-4o mini' },
-        { id: 'gpt-4o', label: 'GPT-4o' },
-        { id: 'gpt-4.1-mini', label: 'GPT-4.1 mini' },
-      ],
-    },
-    {
-      id: 'anthropic',
-      label: 'Anthropic',
-      configured: !!process.env.ANTHROPIC_API_KEY,
-      models: [
-        { id: 'claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku' },
-        { id: 'claude-3-5-sonnet-latest', label: 'Claude 3.5 Sonnet' },
-        { id: 'claude-3-7-sonnet-latest', label: 'Claude 3.7 Sonnet' },
-      ],
-    },
-    {
-      id: 'google',
-      label: 'Google',
-      configured: !!process.env.GOOGLE_GENERATIVE_AI_API_KEY,
-      models: [
-        { id: 'gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash' },
-        { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
-      ],
-    },
-    {
-      id: 'ollama',
-      label: 'Ollama (local)',
-      configured: true,
-      models: [
-        { id: 'llama3.2', label: 'Llama 3.2' },
-        { id: 'qwen2.5', label: 'Qwen 2.5' },
-      ],
-    },
-  ]
+  return (Object.entries(CATALOG) as Array<[ProviderId, (typeof CATALOG)[ProviderId]]>).map(
+    ([id, entry]) => ({
+      id,
+      label: entry.label,
+      models: entry.models,
+      configured: isProviderConfigured(id),
+    }),
+  )
 }
