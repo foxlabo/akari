@@ -4,6 +4,7 @@ import { useChat } from '@ai-sdk/react'
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { Send } from 'lucide-react'
 import { useState } from 'react'
+import { ConversationMenu } from '@/components/chat/conversation-menu'
 import { MessageBubble } from '@/components/chat/message-bubble'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -45,9 +46,12 @@ export function ChatClient({
 
   return (
     <div className="flex flex-1 flex-col min-h-0">
-      <header className="flex items-baseline justify-between border-b border-zinc-200 px-6 py-3 dark:border-zinc-800">
-        <h1 className="text-base font-medium">{conversationTitle}</h1>
-        <span className="text-xs text-zinc-500">{personaName}</span>
+      <header className="flex items-center justify-between gap-3 border-b border-zinc-200 px-6 py-2.5 dark:border-zinc-800">
+        <div className="flex min-w-0 items-baseline gap-3">
+          <h1 className="truncate text-base font-medium">{conversationTitle}</h1>
+          <span className="shrink-0 text-xs text-zinc-500">{personaName}</span>
+        </div>
+        <ConversationMenu conversationId={conversationId} currentTitle={conversationTitle} />
       </header>
 
       <ScrollArea className="flex-1">
