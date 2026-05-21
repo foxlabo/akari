@@ -16,6 +16,7 @@ export default async function ConversationPage({ params }: PageProps) {
 
   const conversation = getConversation(id)
   if (!conversation) notFound()
+  if (conversation.archivedAt !== null) notFound()
 
   const persona = getPersona(conversation.personaId)
   if (!persona) notFound()

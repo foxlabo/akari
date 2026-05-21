@@ -8,8 +8,12 @@ let initialized = false
 
 /**
  * Apply pending migrations and seed default personas idempotently.
- * Safe to call multiple times — protected by both a process-local flag
- * and `INSERT OR IGNORE` on the personas table (stable ids).
+ *
+ * Safe to call multiple times concurrently:
+ *   - `drizzle migrate` checks the `__drizzle_migrations` table before applying
+ *     anything, so a parallel call is a no-op once the first one has won.
+ *   - `upsertPersonaIfMissing` uses `INSERT OR IGNORE` on a stable primary key,
+ *     so duplicate seed attempts are also no-ops.
  *
  * Should be called once before the first DB query in any server context.
  */

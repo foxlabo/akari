@@ -107,15 +107,21 @@ export function getMessage(id: string): Message | undefined {
 /**
  * Append a message, bumping the conversation's updatedAt in the same transaction.
  *
- * If `values.id` is provided and a row with that id already exists, the existing
- * row is returned unchanged — this makes retries safe (e.g. when the AI SDK
- * resends a request with the same client message id).
+ * If `values.id` is provided and a row with that id already exists with the same
+ * conversationId + role, the existing row is returned unchanged — making retries
+ * safe. If the id collides with a row from a different conversation or role, we
+ * throw rather than silently overwriting (defence against client id reuse).
  */
 export function appendMessage(values: Omit<NewMessage, 'createdAt'>): Message {
   return db.transaction((tx) => {
     if (values.id) {
       const existing = tx.select().from(messages).where(eq(messages.id, values.id)).get()
-      if (existing) return existing
+      if (existing) {
+        if (existing.conversationId !== values.conversationId || existing.role !== values.role) {
+          throw new Error('Message id collision with a different conversation or role')
+        }
+        return existing
+      }
     }
     const inserted = tx.insert(messages).values(values).returning().get()
     tx.update(conversations)
@@ -128,7 +134,7 @@ export function appendMessage(values: Omit<NewMessage, 'createdAt'>): Message {
 
 /**
  * Most-recent N messages in chronological (ascending) order, suitable for
- * feeding into a model. We grab the tail by descending sort + limit, then
+ * feeding into a model. Grab the tail by descending sort + limit, then
  * reverse so the oldest message is first.
  */
 export function tailMessagesForChat(
