@@ -1,9 +1,14 @@
 'use client'
 
-import { MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
+import { Archive, Download, MoreHorizontal, Pencil, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
-import { deleteConversationAction, renameConversationAction } from '@/app/chat/actions'
+import {
+  archiveConversationAction,
+  deleteConversationAction,
+  exportConversationAction,
+  renameConversationAction,
+} from '@/app/chat/actions'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
@@ -41,11 +46,36 @@ export function ConversationMenu({ conversationId, currentTitle }: ConversationM
     })
   }
 
+  const handleArchive = () => {
+    if (!confirm(`Archive "${currentTitle}"? It will be hidden from the sidebar.`)) return
+    startTransition(async () => {
+      await archiveConversationAction(conversationId)
+    })
+  }
+
   const handleDelete = () => {
     if (!confirm(`Delete "${currentTitle}"? This cannot be undone.`)) return
     startTransition(async () => {
       await deleteConversationAction(conversationId)
-      // Server action redirects to /chat/new on success.
+    })
+  }
+
+  const handleExport = () => {
+    startTransition(async () => {
+      const result = await exportConversationAction(conversationId)
+      if (!result.ok) {
+        setError(result.error)
+        return
+      }
+      const blob = new Blob([result.markdown], { type: 'text/markdown;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = result.filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
     })
   }
 
@@ -53,7 +83,7 @@ export function ConversationMenu({ conversationId, currentTitle }: ConversationM
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label="Conversation actions">
+          <Button variant="ghost" size="icon" aria-label="Conversation actions" disabled={pending}>
             <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
@@ -61,6 +91,14 @@ export function ConversationMenu({ conversationId, currentTitle }: ConversationM
           <DropdownMenuItem onSelect={() => setRenameOpen(true)}>
             <Pencil className="h-4 w-4" />
             Rename
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={handleExport}>
+            <Download className="h-4 w-4" />
+            Export as Markdown
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={handleArchive}>
+            <Archive className="h-4 w-4" />
+            Archive
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem variant="destructive" onSelect={handleDelete}>
@@ -81,9 +119,14 @@ export function ConversationMenu({ conversationId, currentTitle }: ConversationM
               onChange={(e) => setTitle(e.target.value)}
               maxLength={120}
               placeholder="New title"
+              aria-label="Conversation title"
               autoFocus
             />
-            {error ? <p className="text-sm text-red-600 dark:text-red-400">{error}</p> : null}
+            {error ? (
+              <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+                {error}
+              </p>
+            ) : null}
             <div className="flex justify-end gap-2">
               <Button type="button" variant="ghost" onClick={() => setRenameOpen(false)}>
                 Cancel
