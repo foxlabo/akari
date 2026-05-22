@@ -17,6 +17,14 @@ interface ChatClientProps {
   initialMessages: UIMessage[]
 }
 
+/** Flatten a UIMessage's text parts into a single string. */
+function messageText(message: UIMessage): string {
+  return message.parts
+    .filter((p) => p.type === 'text')
+    .map((p) => ('text' in p ? p.text : ''))
+    .join('\n\n')
+}
+
 export function ChatClient({
   conversationId,
   conversationTitle,
@@ -78,7 +86,9 @@ export function ChatClient({
               Start the conversation by typing below.
             </p>
           ) : (
-            messages.map((message) => <MessageBubble key={message.id} message={message} />)
+            messages.map((message) => (
+              <MessageBubble key={message.id} role={message.role} text={messageText(message)} />
+            ))
           )}
           {error ? (
             <div

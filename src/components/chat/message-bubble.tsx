@@ -1,4 +1,3 @@
-import type { UIMessage } from 'ai'
 import { memo } from 'react'
 import ReactMarkdown, { type Components, defaultUrlTransform } from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
@@ -6,7 +5,8 @@ import remarkGfm from 'remark-gfm'
 import { cn } from '@/lib/utils'
 
 interface MessageBubbleProps {
-  message: UIMessage
+  role: 'user' | 'assistant' | 'system'
+  text: string
 }
 
 const ALLOWED_URL_PROTOCOLS = ['http:', 'https:', 'mailto:'] as const
@@ -39,16 +39,17 @@ const markdownComponents: Components = {
   ),
 }
 
-function extractMessageText(message: UIMessage): string {
-  return message.parts
-    .filter((p) => p.type === 'text')
-    .map((p) => ('text' in p ? p.text : ''))
-    .join('\n\n')
-}
-
-function MessageBubbleImpl({ message }: MessageBubbleProps) {
-  const isUser = message.role === 'user'
-  const text = extractMessageText(message)
+/**
+ * A single chat message bubble.
+ *
+ * Takes `role` + `text` as primitive props (not the UIMessage object) on
+ * purpose: the AI SDK mutates streaming message objects in place, so memoising
+ * on the object reference would never detect streamed updates. With a plain
+ * string prop, the default shallow `memo` comparison re-renders exactly when
+ * the text changes and skips unrelated re-renders (e.g. composer typing).
+ */
+function MessageBubbleImpl({ role, text }: MessageBubbleProps) {
+  const isUser = role === 'user'
 
   return (
     <div className={cn('flex w-full', isUser ? 'justify-end' : 'justify-start')}>
@@ -60,26 +61,23 @@ function MessageBubbleImpl({ message }: MessageBubbleProps) {
             : 'bg-white text-zinc-900 ring-1 ring-zinc-200 dark:bg-zinc-900 dark:text-zinc-100 dark:ring-zinc-800',
         )}
       >
-        <div className="prose prose-sm dark:prose-invert max-w-none [&_pre]:bg-zinc-100 dark:[&_pre]:bg-zinc-900 [&_pre]:px-3 [&_pre]:py-2 [&_pre]:rounded-md [&_code]:before:hidden [&_code]:after:hidden">
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[[rehypeHighlight, { detect: true, ignoreMissing: true }]]}
-            urlTransform={safeUrlTransform}
-            components={markdownComponents}
-          >
-            {text}
-          </ReactMarkdown>
-        </div>
+        {text ? (
+          <div className="prose prose-sm dark:prose-invert max-w-none [&_pre]:bg-zinc-100 dark:[&_pre]:bg-zinc-900 [&_pre]:px-3 [&_pre]:py-2 [&_pre]:rounded-md [&_code]:before:hidden [&_code]:after:hidden">
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              rehypePlugins={[[rehypeHighlight, { detect: true, ignoreMissing: true }]]}
+              urlTransform={safeUrlTransform}
+              components={markdownComponents}
+            >
+              {text}
+            </ReactMarkdown>
+          </div>
+        ) : (
+          <span className="inline-block size-2 animate-pulse rounded-full bg-current opacity-40" />
+        )}
       </div>
     </div>
   )
 }
 
-/**
- * Memoised by message identity + text content so unrelated re-renders
- * (e.g. composer typing) don't reparse markdown.
- */
-export const MessageBubble = memo(MessageBubbleImpl, (prev, next) => {
-  if (prev.message.id !== next.message.id) return false
-  return extractMessageText(prev.message) === extractMessageText(next.message)
-})
+export const MessageBubble = memo(MessageBubbleImpl)
