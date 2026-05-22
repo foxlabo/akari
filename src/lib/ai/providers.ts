@@ -23,36 +23,42 @@ export interface ConfiguredProviderInfo extends ProviderCatalogEntry {
 /**
  * The static catalogue of provider + model combinations the UI exposes.
  * Pure data, safe to import from client components.
+ *
+ * Model IDs verified against provider docs (May 2026). When providers ship
+ * new models, update the ids here — nothing else needs to change.
  */
 const CATALOG: Record<ProviderId, { label: string; models: ProviderModel[] }> = {
   openai: {
     label: 'OpenAI',
     models: [
-      { id: 'gpt-4o-mini', label: 'GPT-4o mini' },
-      { id: 'gpt-4o', label: 'GPT-4o' },
-      { id: 'gpt-4.1-mini', label: 'GPT-4.1 mini' },
+      { id: 'gpt-5.4-mini', label: 'GPT-5.4 mini' },
+      { id: 'gpt-5.4', label: 'GPT-5.4' },
+      { id: 'gpt-5.5', label: 'GPT-5.5' },
+      { id: 'gpt-5.4-nano', label: 'GPT-5.4 nano' },
+      { id: 'gpt-4.1', label: 'GPT-4.1 (long context)' },
     ],
   },
   anthropic: {
     label: 'Anthropic',
     models: [
-      { id: 'claude-3-5-haiku-latest', label: 'Claude 3.5 Haiku' },
-      { id: 'claude-3-5-sonnet-latest', label: 'Claude 3.5 Sonnet' },
-      { id: 'claude-3-7-sonnet-latest', label: 'Claude 3.7 Sonnet' },
+      { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5' },
+      { id: 'claude-sonnet-4-6', label: 'Claude Sonnet 4.6' },
+      { id: 'claude-opus-4-7', label: 'Claude Opus 4.7' },
     ],
   },
   google: {
     label: 'Google',
     models: [
-      { id: 'gemini-2.0-flash-exp', label: 'Gemini 2.0 Flash' },
-      { id: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro' },
+      { id: 'gemini-3.5-flash', label: 'Gemini 3.5 Flash' },
+      { id: 'gemini-3.1-pro-preview', label: 'Gemini 3.1 Pro' },
+      { id: 'gemini-3.1-flash-lite', label: 'Gemini 3.1 Flash-Lite' },
     ],
   },
   ollama: {
     label: 'Ollama (local)',
     models: [
-      { id: 'llama3.2', label: 'Llama 3.2' },
-      { id: 'qwen2.5', label: 'Qwen 2.5' },
+      { id: 'llama3.3', label: 'Llama 3.3' },
+      { id: 'qwen3', label: 'Qwen 3' },
     ],
   },
 }
