@@ -10,7 +10,7 @@ import { listConversations } from '@/lib/db/queries'
 
 export default function ChatLayout({ children }: { children: React.ReactNode }) {
   ensureDbReady()
-  const conversations = listConversations()
+  const conversations = listConversations().map((c) => ({ id: c.id, title: c.title }))
 
   return (
     <div className="flex h-screen w-full">
@@ -25,18 +25,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
           </Button>
         </div>
         <ScrollArea className="flex-1">
-          <ConversationSearch
-            conversations={conversations}
-            emptyText="No conversations yet."
-            renderItem={(c) => (
-              <Link
-                href={`/chat/${c.id}`}
-                className="block truncate rounded-md px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-200 dark:text-zinc-300 dark:hover:bg-zinc-800"
-              >
-                {c.title}
-              </Link>
-            )}
-          />
+          <ConversationSearch conversations={conversations} emptyText="No conversations yet." />
         </ScrollArea>
         <div className="flex items-center justify-between border-t border-zinc-200 p-3 text-xs text-zinc-500 dark:border-zinc-800">
           <Link href="/personas" className="hover:underline">

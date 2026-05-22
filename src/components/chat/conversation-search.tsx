@@ -1,31 +1,29 @@
 'use client'
 
 import { Search, X } from 'lucide-react'
+import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
-interface Item {
+interface ConversationItem {
   id: string
   title: string
 }
 
 interface ConversationSearchProps {
-  conversations: Item[]
-  renderItem: (item: Item) => React.ReactNode
+  conversations: ConversationItem[]
   emptyText: string
 }
 
 /**
- * Client-side filter over the sidebar conversation list. Keeps the search box
- * + filtered list in one component so we don't need a server round trip for
- * each keystroke.
+ * Sidebar conversation list with a client-side text filter.
+ *
+ * Renders the list items itself (rather than taking a `renderItem` callback)
+ * because functions cannot cross the Server -> Client Component boundary —
+ * only serialisable props (the `conversations` array) are passed in.
  */
-export function ConversationSearch({
-  conversations,
-  renderItem,
-  emptyText,
-}: ConversationSearchProps) {
+export function ConversationSearch({ conversations, emptyText }: ConversationSearchProps) {
   const [query, setQuery] = useState('')
 
   const filtered = useMemo(() => {
@@ -64,7 +62,15 @@ export function ConversationSearch({
             {query.trim() ? 'No matches.' : emptyText}
           </p>
         ) : (
-          filtered.map((c) => <div key={c.id}>{renderItem(c)}</div>)
+          filtered.map((c) => (
+            <Link
+              key={c.id}
+              href={`/chat/${c.id}`}
+              className="block truncate rounded-md px-3 py-2 text-sm text-zinc-700 transition-colors hover:bg-zinc-200 dark:text-zinc-300 dark:hover:bg-zinc-800"
+            >
+              {c.title}
+            </Link>
+          ))
         )}
       </nav>
     </>
