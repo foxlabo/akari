@@ -2,8 +2,6 @@
 
 Multi-provider AI chat with persona switching, conversation history, and local-first storage.
 
-> Inspired by [lobe-chat](https://github.com/lobehub/lobe-chat). Independently re-implemented from scratch as a portfolio project.
-
 ## Status
 
 ✅ **v1.0** — production-quality local chat: streaming, persistence, persona CRUD,
