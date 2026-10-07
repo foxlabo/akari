@@ -62,7 +62,12 @@ function MessageBubbleImpl({ role, text }: MessageBubbleProps) {
         )}
       >
         {text ? (
-          <div className="prose prose-sm dark:prose-invert max-w-none [&_pre]:bg-zinc-100 dark:[&_pre]:bg-zinc-900 [&_pre]:px-3 [&_pre]:py-2 [&_pre]:rounded-md [&_code]:before:hidden [&_code]:after:hidden">
+          <div
+            // User bubbles invert their background, so the text must follow the
+            // bubble's colour rather than prose's body colour (which matches the page).
+            style={isUser ? { color: 'inherit' } : undefined}
+            className="prose prose-sm dark:prose-invert max-w-none [&_pre]:bg-zinc-100 dark:[&_pre]:bg-zinc-900 [&_pre]:px-3 [&_pre]:py-2 [&_pre]:rounded-md [&_code]:before:hidden [&_code]:after:hidden"
+          >
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               rehypePlugins={[[rehypeHighlight, { detect: true, ignoreMissing: true }]]}
